@@ -1,0 +1,12 @@
+Type=X-GNOME-Metatheme
+[Desktop Entry]
+Name=Adapta
+Comment=GTK theme matching the active Omarchy theme
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=Adapta
+MetacityTheme=Adapta
+IconTheme=Papirus-Dark
+CursorTheme=default
+ButtonLayout=close,minimize,maximize:menu
