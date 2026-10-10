@@ -306,7 +306,71 @@ want to change casually.
 
 ---
 
-## 6. Known risks and sharp edges
+## 6. The trap: a user stylesheet silently overrides the theme
+
+This is the part that looks like success and isn't. **GTK loads
+`~/.config/gtk-<ver>/gtk.css` *in addition to* the theme in `~/.themes`, so it
+wins over everything the theme provides.** A hook that sets `gtk-theme` correctly
+and rebuilds the stylesheets correctly can still be completely masked.
+
+This bit here. The hook was installed, `gtk-theme` read `Adapta`, and the theme
+looked right — because whatever else was generating the palette was generating it
+from the same `colors.toml`. But a comparison of the two sources showed the
+override in effect:
+
+| named colour | the overriding stylesheet | Adapta |
+| --- | --- | --- |
+| `theme_selected_bg_color` | `#1c0a2c` — near-invisible on a dark window | `#3298fa`, the accent |
+| `headerbar_fg_color` | `#ffffff` | `#e0e6ff` |
+| `theme_base_color` | `#08020f` | `#0a0314` |
+| `card_bg_color`, `popover_bg_color`, `view_bg_color`, … | various | various |
+
+24 named colours were defined by both; 8 disagreed. The visible one is the
+selection background: the override painted it a dark purple that was effectively
+invisible against the window.
+
+The cause was the `thpm` theme plugin's `gtk-css-compat` integration, which
+deploys `~/.config/gtk-*/gtk.css` importing its own generated
+`thpm-theme.css` — 34 `@define-color` lines, loaded on top of the theme.
+
+### The fix
+
+```bash
+thpm plugin disable gtk-css-compat
+```
+
+Use the tool's own disable path rather than deleting the files by hand. thpm's
+`cleanup_gtk()` removes the managed import block *and* unlinks the generated
+`thpm-theme.css`, so it won't be rewritten on the next switch. Deleting the
+files manually leaves the integration enabled, which just re-creates them.
+
+This is not a thpm bug and not an Omarchy bug — it's two tools both legitimately
+owning GTK theming. thpm's own registry labels the integration *"Omarchy owns
+mode and icons; THPM covers optional theme GTK CSS"*, which is exactly the
+confusion: **only one of them should be covering GTK CSS.**
+
+### How the hook handles it now
+
+The hook checks for this on every switch and, if it finds a stylesheet importing
+`thpm-theme.css`, writes a one-time notice to
+`~/.local/state/omarchy/adapta-user-css-warned` and prints a short line to
+**stderr**. stderr rather than stdout because `omarchy-theme-set` discards hook
+stdout — the stock `90-thpm` hook does the same for its reporting.
+
+It deliberately does not disable the integration itself: a hook reaching into
+another tool's configuration on its own is worse than one that tells you. If you
+want it fully automatic, delete the marker file's `if` guard and call
+`thpm plugin disable gtk-css-compat` in its place.
+
+### Why a stock Omarchy install does NOT hit this
+
+Stock Omarchy ships no `~/.config/gtk-4.0/gtk.css` and no theme-set hooks
+(`/usr/share/omarchy/config/omarchy/hooks/theme-set.d/` is empty). thpm is a
+third-party install. So on a fresh install the three-step workflow — clone, install
+the hook, switch theme — works with nothing extra, and this section only applies
+to a machine that has since installed a plugin that also wants to own GTK CSS.
+
+## 7. Known risks and sharp edges
 
 **`~/.config/gtk-4.0/` and `thpm`.** The stock `90-thpm` hook manages
 `~/.config/gtk-*/gtk.css` and `~/.config/gtk-*/thpm-theme.css`, and its
@@ -336,7 +400,7 @@ by one `omarchy theme set <current theme>` to converge immediately.
 
 ---
 
-## 7. Reproducing the verification
+## 8. Reproducing the verification
 
 ```bash
 # install

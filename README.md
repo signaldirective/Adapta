@@ -88,6 +88,11 @@ so the last line above is what makes it take effect immediately.
 If Adapta isn't installed the hook does nothing, and if a rebuild ever fails it
 leaves Omarchy's own theme choice standing rather than a broken one.
 
+**If a theme plugin is already theming GTK**, check
+`~/.local/state/omarchy/adapta-user-css-warned` — the hook writes a notice there
+if it finds one, because GTK loads `~/.config/gtk-*/gtk.css` *on top of* the
+theme and would otherwise silently override Adapta's colours.
+
 How that works — including why a hook has to run *after* Omarchy has already
 defaulted you to Adwaita — is in
 [docs/theme-set-hook.md](docs/theme-set-hook.md), written to double as the basis

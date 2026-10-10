@@ -38,6 +38,34 @@ done
 [[ -n $adapta ]] || exit 0
 name=$(basename "$adapta")
 
+# --- detect a user stylesheet that would override the theme ----------------
+# GTK loads ~/.config/gtk-<ver>/gtk.css *in addition to* the theme, so it wins
+# over everything in ~/.themes. If something else is writing one, Adapta's
+# named colours would be silently masked -- the theme would look broadly right
+# (both derive from the same colors.toml) but wrong wherever the two disagree.
+# Detect it once and say so, rather than letting it hide.
+notice="$HOME/.local/state/omarchy/adapta-user-css-warned"
+if [[ ! -f $notice ]]; then
+  for ini in "$HOME/.config/gtk-3.0/gtk.css" "$HOME/.config/gtk-4.0/gtk.css"; do
+    [[ -f $ini ]] || continue
+    if grep -q "thpm-theme.css" "$ini" 2>/dev/null; then
+      mkdir -p "$(dirname "$notice")"
+      cat >"$notice" <<EOF
+note: another theme plugin is writing $ini, which GTK loads on top of the
+theme in ~/.themes. That overrides Adapta's named colours where they
+disagree -- most visibly the selection background. To let Adapta do the
+GTK work, turn that integration off:
+
+    thpm plugin disable gtk-css-compat
+
+Re-run 'omarchy hook install theme-set' after editing this hook.
+EOF
+      echo "adapta: another plugin is overriding the GTK theme -- see $notice" >&2
+      break
+    fi
+  done
+fi
+
 # --- rebuild from the theme omarchy just staged ---------------------------
 theme="$HOME/.local/state/omarchy/current/theme"
 [[ -d $theme ]] || exit 0

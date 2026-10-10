@@ -1,30 +1,30 @@
 <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg">
     <defs>
         <linearGradient id="b">
-            <stop offset="0" style="stop-color: #565046;
+            <stop offset="0" style="stop-color: #493B5B;
                                 stop-opacity: 1"/>
-            <stop offset="1" style="stop-color: #2D2C2B;
+            <stop offset="1" style="stop-color: #1C0A2C;
                                 stop-opacity:1"/>
         </linearGradient>
 
         <linearGradient id="a">
-            <stop style="stop-color: #222222;
+            <stop style="stop-color: #08020f;
                      stop-opacity: 1" offset="0"/>
-            <stop style="stop-color: #7daea3;
+            <stop style="stop-color: #3298fa;
                      stop-opacity: 1" offset="1"/>
         </linearGradient>
 
         <linearGradient id="c">
-            <stop style="stop-color: #565046;
+            <stop style="stop-color: #493B5B;
                      stop-opacity: 1" offset="0"/>
-            <stop style="stop-color: #2D2C2B;
+            <stop style="stop-color: #1C0A2C;
                      stop-opacity: 1" offset="1"/>
         </linearGradient>
 
         <linearGradient id="d">
-            <stop style="stop-color: #2d2c2b;
+            <stop style="stop-color: #1c0a2c;
                      stop-opacity: 1" offset="0"/>
-            <stop style="stop-color: #3e3c37;
+            <stop style="stop-color: #322243;
                      stop-opacity: 1" offset="1"/>
         </linearGradient>
     </defs>
@@ -36,9 +36,9 @@
                 display: inline;
                 overflow: visible;
                 visibility: visible;
-                fill: alpha(#7daea3,1);
+                fill: alpha(#50b0ff,1);
                 fill-opacity: 1;
-                stroke: alpha(#7daea3,1);
+                stroke: alpha(#50b0ff,1);
                 stroke-width: 2;
                 stroke-linecap: butt;
                 stroke-linejoin: round;
@@ -50,7 +50,7 @@
                 enable-background: accumulate"/>
 
         <path style="color: #000;
-                fill: alpha(#2d2c2b,1);
+                fill: alpha(#1c0a2c,1);
                 stroke-linecap: round;
                 stroke-linejoin: round;
                 -inkscape-stroke: none"
