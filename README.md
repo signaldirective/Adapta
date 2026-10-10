@@ -40,6 +40,8 @@ python3 build.py --omarchy ~/.config/omarchy/themes/flexoki-light
 
 It's idempotent — every build starts from `src/`, a pristine copy of the template that's never modified. Run it twice and you get the same bytes back.
 
+The committed `gtk-3.0/`, `gtk-4.0/` and `gnome-shell/` are a build snapshot, not a meaningful default: they hold whichever theme was active the last time the build ran, so a fresh clone is already themed for whatever it was built against. With the hook installed they're rewritten on every theme switch anyway.
+
 ## How it works
 
 `src/` holds the stock stylesheets, a template descended from
@@ -68,6 +70,28 @@ If a `colors.toml` uses key names that aren't part of that vocabulary, the build
 ### Verified against
 
 The 45 Omarchy themes on the machine it was built on, covering all three palette shapes including light themes. Every one builds with zero CSS parse errors under GTK 4, and every colour in the output traces back to the resolved palette.
+
+## Staying in step automatically
+
+Adapta can follow your Omarchy theme as you change it, so you never run the
+build by hand. `tools/95-adapta` is an Omarchy `theme-set` hook:
+
+```bash
+omarchy hook install theme-set tools/95-adapta
+omarchy theme set "$(cat ~/.local/state/omarchy/current/theme.name)"
+```
+
+From then on, picking a theme in the Omarchy menu rebuilds Adapta from that
+theme's colours and points GTK at it. Nothing runs until the next theme change,
+so the last line above is what makes it take effect immediately.
+
+If Adapta isn't installed the hook does nothing, and if a rebuild ever fails it
+leaves Omarchy's own theme choice standing rather than a broken one.
+
+How that works — including why a hook has to run *after* Omarchy has already
+defaulted you to Adwaita — is in
+[docs/theme-set-hook.md](docs/theme-set-hook.md), written to double as the basis
+for an upstream PR.
 
 ## Two things to know if you edit the template
 

@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+#
+# Adapta — keep the GTK theme matched to whichever Omarchy theme was just applied.
+#
+# This is a theme-set hook. `omarchy-theme-set` reaches it like this:
+#
+#     post_theme_commands=( ... omarchy-theme-set-gnome ... )
+#     run_parallel "${post_theme_commands[@]}"   # <-- forces gtk-theme=Adwaita(-dark)
+#     omarchy-hook theme-set "$THEME_NAME"       # <-- runs second
+#
+# That ordering is the whole trick. `omarchy-theme-set-gnome` hardcodes the GTK
+# theme to Adwaita (or Adwaita-dark) on *every* switch, with no override hook.
+# The theme-set hooks run after it, so this one gets the last word.
+#
+# $1 — the theme slug, e.g. "inkypinky". Not used directly: the theme omarchy
+#      applied is read from current/theme, which already has any
+#      ~/.config/omarchy/themes/<slug> overlay merged into it.
+#
+# Everything fails closed. A rebuild that cannot finish leaves Omarchy's own
+# Adwaita choice standing, which is the correct degradation for a system
+# hook that runs on every theme switch whether or not Adapta is installed.
+
+slug="${1:-}"
+
+# --- find Adapta, wherever it was cloned and whatever it was named ---------
+# Prefer ~/.themes/Adapta explicitly, then fall back to any installed theme
+# directory carrying a build.py — the theme name is a directory-name property,
+# so hardcoding it would break if the theme were renamed.
+adapta=""
+for candidate in "$HOME/.themes/Adapta" "$HOME"/.themes/*/; do
+  [[ -d $candidate ]] || continue
+  if [[ -f "$candidate/build.py" ]]; then
+    adapta="${candidate%/}"
+    break
+  fi
+done
+
+[[ -n $adapta ]] || exit 0
+name=$(basename "$adapta")
+
+# --- rebuild from the theme omarchy just staged ---------------------------
+theme="$HOME/.local/state/omarchy/current/theme"
+[[ -d $theme ]] || exit 0
+
+python3 "$adapta/build.py" --omarchy "$theme" >/dev/null 2>&1 || exit 0
+
+# --- claim the GTK theme back ---------------------------------------------
+# set-gnome has already run Adwaita/Adwaita-dark through gsettings; undo it.
+gsettings set org.gnome.desktop.interface gtk-theme "$name" 2>/dev/null || true
+
+# settings.ini is what GTK consults when no XSettings daemon is answering, so
+# keep it in step rather than letting gsettings and the ini file disagree.
+for ini in "$HOME/.config/gtk-3.0/settings.ini" "$HOME/.config/gtk-4.0/settings.ini"; do
+  [[ -f $ini ]] || continue
+  if grep -q '^gtk-theme-name=' "$ini"; then
+    sed -i "s/^gtk-theme-name=.*/gtk-theme-name=$name/" "$ini"
+  else
+    printf 'gtk-theme-name=%s\n' "$name" >>"$ini"
+  fi
+done
+
+exit 0
